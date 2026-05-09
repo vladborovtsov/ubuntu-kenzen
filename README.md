@@ -1,31 +1,29 @@
 # Ubuntu Kenzen Builder
 
-An automated, containerized pipeline to build highly customized, bloat-free ("kenzen") Ubuntu disk images. It supports building both `amd64` and `arm64` architectures, for `MBR` and `UEFI` boot modes. 
+An automated, containerized pipeline for building highly customized, bloat-free ("kenzen") Ubuntu disk images. It supports building both `amd64` and `arm64` architectures, for `MBR` and `UEFI` boot modes.
 
-The build pipeline leverages a **privileged loop-device architecture** within Docker, ensuring cross-platform compatibility across local environments (like macOS Docker Desktop) and CI/CD systems (like GitHub Actions).
+The build pipeline leverages a **privileged loop-device architecture** within Docker, ensuring reliable cross-platform compatibility across local environments (like macOS Docker Desktop) and CI/CD systems (like GitHub Actions).
 
-## Project Structure
+## 🌟 Key Features
 
-- `Dockerfile`: The isolated environment containing all necessary OS-building tools (`debootstrap`, `qemu-utils`, `parted`, etc.).
-- `scripts/build.sh`: The core orchestration script that partitions raw images, runs `debootstrap`, and configures GRUB.
-- `configs/`:
-    - `no-bloat`: APT configuration that aggressively pins and prevents bloatware (like `snapd`, `apparmor`, and `systemd-oomd`) from being installed.
-    - `cloud-init-defaults`: Base configurations to ensure the images are cloud-ready on first boot.
+*   **"Kenzen" (Bloat-Free):** Aggressively pins and prevents bloatware such as `ubuntu-pro`, `snapd`, `apparmor`, and `systemd-oomd` via custom APT configurations.
+*   **Architecture Agnostic:** Supports cross-compiling `amd64` and `arm64` targets dynamically relying on QEMU and Docker.
+*   **Cloud-Ready:** Includes base `cloud-init` configurations so images are ready for deployment on first boot.
 
-## The Architecture & Technical Fixes
+## 📂 Project Structure
 
-Our builder runs in privileged Docker containers. We chose this over a rootless `mmdebstrap` approach to ensure reliable cross-architecture compiling (e.g., building `amd64` images on an `arm64` host).
+- `Dockerfile`: The isolated build environment containing all necessary OS-building tools (`debootstrap`, `qemu-utils`, `parted`, etc.).
+- `scripts/build.sh`: The core orchestration script that handles disk creation, partitioning, loop device mounting, `debootstrap`, and GRUB configuration.
+- `configs/no-bloat`: APT preferences configuration used to block unwanted packages.
+- `configs/cloud-init-defaults`: Base configurations to ensure smooth first-boot experiences.
 
-### Final Technical Fixes
-1. **Loop Device Node Mapping:** Docker containers (especially FUSE/macOS implementations) do not automatically trigger `udev` to populate `/dev/loopXpY` partition nodes when an image is mounted. To bypass this kernel limitation, we query `/sys/block/` and use `mknod` to manually generate the block devices for formatting (`mkfs.vfat` and `mkfs.ext4`).
-2. **Disk Capacity:** An Ubuntu 24.04 (Noble) system requires a substantial amount of space. We increased the default generated `DISK_SIZE` from `2G` to `4G` to prevent `debootstrap` from running out of space when unpacking massive dependencies like `linux-firmware`.
-3. **Chroot POSIX Compliance:** Inside the chroot environment, Ubuntu relies on `dash` rather than `bash`. We updated our `if` string comparisons (`=` instead of `==`) to prevent "unexpected operator" errors.
-4. **GRUB Architecture Targeting:** We correctly mapped the host script architecture (`amd64` / `arm64`) to GRUB's internal EFI targets (`x86_64-efi` / `arm64-efi`) to ensure `grub-install` successfully initializes the boot sector.
-5. **Ubuntu Package Archives:** Ubuntu splits its package repositories by architecture. We dynamically swap the `debootstrap` mirror from `archive.ubuntu.com` (for `amd64`) to `ports.ubuntu.com` (for `arm64`) to ensure packages are successfully located during the build.
 
-## How to Build
+## 🚀 How to Build Locally
 
-The image orchestration is fully functioning.
+The image orchestration is fully functional and can be run locally via Docker.
+
+> [!IMPORTANT]
+> **Privileged Mode**: Running the build script requires `--privileged` mode to allow loop device management and mounting within the container. Docker Desktop on Mac fully supports this because it runs a lightweight Linux VM in the background.
 
 ### Build for AMD64 (Standard PCs/Servers)
 ```bash
@@ -39,11 +37,7 @@ docker build -t image-builder .
 docker run --privileged -v $(pwd)/output:/output image-builder --arch arm64 --boot uefi
 ```
 
-The output will be found as a mountable `.img` file in your `./output` directory.
+*Note: You can swap `--boot uefi` with `--boot mbr` if legacy BIOS support is needed.*
 
-### GitHub Actions
+The output will be found as a mountable `.img` file (e.g., `ubuntu-amd64-uefi.img`) in your `./output` directory.
 
-The images are automatically built on every tag push or via manual trigger.
-
-> [!IMPORTANT]
-> **Privileged Mode**: Running the build script requires `--privileged` mode to allow loop device management and mounting within the container. Docker Desktop on Mac fully supports this because it runs a lightweight Linux VM in the background.
