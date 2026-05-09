@@ -92,7 +92,7 @@ if [ "$ARCH" = "amd64" ]; then
 else
     UBUNTU_MIRROR="http://ports.ubuntu.com/ubuntu-ports/"
 fi
-debootstrap --arch="$ARCH" --include=linux-image-generic,grub-efi-${ARCH}-bin,cloud-init,sudo,network-manager "$RELEASE" "$CHROOT_DIR" "$UBUNTU_MIRROR"
+debootstrap --arch="$ARCH" --include=linux-image-generic,initramfs-tools,grub-efi-${ARCH}-bin,cloud-init,sudo,network-manager "$RELEASE" "$CHROOT_DIR" "$UBUNTU_MIRROR"
 
 # Correct grub package based on arch/boot
 if [ "$ARCH" == "amd64" ]; then
@@ -121,9 +121,13 @@ set -e
 # Set hostname
 echo "ubuntu-kenzen" > /etc/hostname
 
-# Disable AppArmor at the kernel level
+# Configure GRUB to pass framebuffer to kernel for monitor output, disable splash
 mkdir -p /etc/default/grub.d
-echo 'GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT apparmor=0"' > /etc/default/grub.d/99-disable-apparmor.cfg
+cat << 'EOF_GRUB' > /etc/default/grub.d/99-custom.cfg
+GRUB_CMDLINE_LINUX_DEFAULT="apparmor=0 nomodeset fbcon=nodefer video=vesafb:off console=tty1"
+GRUB_TERMINAL="gfxterm"
+GRUB_GFXPAYLOAD_LINUX="keep"
+EOF_GRUB
 
 # FSTAB
 ROOT_UUID=\$(blkid -s UUID -o value $PART_ROOT)
@@ -135,7 +139,8 @@ else
     echo "UUID=\$ROOT_UUID / ext4 defaults 0 1" > /etc/fstab
 fi
 
-# Install GRUB
+# Ensure initramfs is created/updated for the kernel and install GRUB
+update-initramfs -c -k all || update-initramfs -u -k all
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y $GRUB_PKG
 
@@ -148,6 +153,9 @@ else
 fi
 
 update-grub
+
+# Fix root partition in GRUB config to use UUID instead of build environment loop device
+sed -i "s|root=/dev/loop[0-9]*p[0-9]*|root=UUID=\$ROOT_UUID|g" /boot/grub/grub.cfg
 EOF
 
 # Install MBR GRUB from outside if needed
