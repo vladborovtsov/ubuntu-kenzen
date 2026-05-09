@@ -92,7 +92,7 @@ if [ "$ARCH" = "amd64" ]; then
 else
     UBUNTU_MIRROR="http://ports.ubuntu.com/ubuntu-ports/"
 fi
-debootstrap --arch="$ARCH" --include=linux-image-generic,initramfs-tools,grub-efi-${ARCH}-bin,cloud-init,sudo,network-manager,htop "$RELEASE" "$CHROOT_DIR" "$UBUNTU_MIRROR"
+debootstrap --arch="$ARCH" --include=linux-image-generic,initramfs-tools,grub-efi-${ARCH}-bin,cloud-init,sudo,network-manager,htop,openssh-server,openssh-client "$RELEASE" "$CHROOT_DIR" "$UBUNTU_MIRROR"
 
 # Correct grub package based on arch/boot
 if [ "$ARCH" == "amd64" ]; then
@@ -120,6 +120,9 @@ cat <<EOF | chroot "$CHROOT_DIR"
 set -e
 # Set hostname
 echo "ubuntu-kenzen" > /etc/hostname
+
+# Enable SSH to autostart on boot
+systemctl enable ssh || systemctl enable ssh.socket
 
 # Configure GRUB to pass framebuffer to kernel for monitor output, disable splash
 mkdir -p /etc/default/grub.d
