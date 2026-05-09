@@ -124,7 +124,7 @@ echo "ubuntu-kenzen" > /etc/hostname
 # Configure GRUB to pass framebuffer to kernel for monitor output, disable splash
 mkdir -p /etc/default/grub.d
 cat << 'EOF_GRUB' > /etc/default/grub.d/99-custom.cfg
-GRUB_CMDLINE_LINUX_DEFAULT="apparmor=0 nomodeset fbcon=nodefer video=vesafb:off console=tty1"
+GRUB_CMDLINE_LINUX_DEFAULT="apparmor=0 fbcon=nodefer console=tty1"
 GRUB_TERMINAL="gfxterm"
 GRUB_GFXPAYLOAD_LINUX="keep"
 EOF_GRUB
