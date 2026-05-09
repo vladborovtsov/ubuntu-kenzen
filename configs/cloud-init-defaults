@@ -4,11 +4,12 @@ users:
     sudo: ALL=(ALL) NOPASSWD:ALL
     groups: users, admin, sudo
     shell: /bin/bash
-    lock_passwd: true
+    lock_passwd: false
+    passwd: "$6$ddIHOYlz923fyRI7$oMcuj6umPam.Rl3OXOMHIFCtsfRcvV8o.kgW/SCRzUlI1PrEi02cJBWzNLenZCAQ6MXpaQQgc44QBuEKNHG7T/"
     ssh_authorized_keys:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... # Add your key here
 
-ssh_pwauth: false
+ssh_pwauth: true
 package_update: true
 package_upgrade: true
 
