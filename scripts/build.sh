@@ -92,7 +92,7 @@ if [ "$ARCH" = "amd64" ]; then
 else
     UBUNTU_MIRROR="http://ports.ubuntu.com/ubuntu-ports/"
 fi
-debootstrap --arch="$ARCH" --include=linux-image-generic,initramfs-tools,grub-efi-${ARCH}-bin,cloud-init,sudo,network-manager "$RELEASE" "$CHROOT_DIR" "$UBUNTU_MIRROR"
+debootstrap --arch="$ARCH" --include=linux-image-generic,initramfs-tools,grub-efi-${ARCH}-bin,cloud-init,sudo,network-manager,htop "$RELEASE" "$CHROOT_DIR" "$UBUNTU_MIRROR"
 
 # Correct grub package based on arch/boot
 if [ "$ARCH" == "amd64" ]; then

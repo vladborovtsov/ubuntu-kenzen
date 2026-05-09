@@ -10,8 +10,8 @@ users:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... # Add your key here
 
 ssh_pwauth: true
-package_update: true
-package_upgrade: true
+package_update: false
+package_upgrade: false
 
 growpart:
   mode: auto
