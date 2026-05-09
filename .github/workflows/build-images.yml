@@ -1,0 +1,52 @@
+name: Build Clean Images
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        boot: [mbr, uefi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Required for cross-arch builds in Docker
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build Image
+        run: |
+          docker build -t image-builder .
+          docker run --privileged \
+            -v $(pwd)/output:/output \
+            image-builder --arch ${{ matrix.arch }} --boot ${{ matrix.boot }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-${{ matrix.arch }}-${{ matrix.boot }}
+          path: output/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    # Only run this job if it's a tag push
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true # This will extract all files into the 'artifacts' directory directly
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

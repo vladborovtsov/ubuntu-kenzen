@@ -1,0 +1,15 @@
+# Build output directory
+/output/
+
+# Mac OS specific
+.DS_Store
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+/tmp/
+*.log

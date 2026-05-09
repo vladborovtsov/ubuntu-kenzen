@@ -1,0 +1,22 @@
+#cloud-config
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin, sudo
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... # Add your key here
+
+ssh_pwauth: false
+package_update: true
+package_upgrade: true
+
+growpart:
+  mode: auto
+  devices: ['/']
+
+write_files:
+  - path: /etc/needrestart/needrestart.conf
+    content: |
+      $nrconf{restart} = 'a';

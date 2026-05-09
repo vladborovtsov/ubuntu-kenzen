@@ -1,0 +1,13 @@
+# No bloat APT policy
+Package: *
+Pin: release a=noble-updates
+Pin-Priority: 900
+
+Package: *
+Pin: release a=noble-security
+Pin-Priority: 1000
+
+# Prevent some common unwanted packages
+Package: snapd apparmor systemd-oomd
+Pin: release *
+Pin-Priority: -10
